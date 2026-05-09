@@ -41,7 +41,7 @@ export default function StockItemsPage() {
         <Flex justify="space-between" align="flex-start" gap={16} wrap="wrap">
           <div>
             <Typography.Title level={2} style={{ marginTop: 0, marginBottom: 8 }}>
-              Stock Items
+              Stock Items Pro
             </Typography.Title>
             <Typography.Text type="secondary">
               Manage textile item masters, variants, barcode, batch and selling prices
