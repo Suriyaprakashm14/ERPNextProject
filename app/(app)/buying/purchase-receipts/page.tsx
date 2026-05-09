@@ -1,3 +1,5 @@
-﻿export default function Page() {
-  return <div>(app) / buying / purchase-receipts page</div>;
+﻿import PurchaseReceiptsPage from "@/components/buying/PurchaseReceiptsPage";
+
+export default function Page() {
+  return <PurchaseReceiptsPage />;
 }
