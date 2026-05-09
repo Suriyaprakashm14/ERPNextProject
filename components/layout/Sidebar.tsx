@@ -4,6 +4,7 @@ import {
   AppstoreOutlined,
   DashboardOutlined,
   InboxOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 import { Menu, Typography } from "antd";
 import Link from "next/link";
@@ -23,6 +24,10 @@ function getIcon(key: string) {
 
   if (key.startsWith("stock")) {
     return <InboxOutlined />;
+  }
+
+  if (key.startsWith("buying")) {
+    return <ShoppingCartOutlined />;
   }
 
   return <AppstoreOutlined />;

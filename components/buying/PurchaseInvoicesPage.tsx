@@ -1,0 +1,155 @@
+"use client";
+
+import { App, Button, Card, Empty, Flex, Input, Space, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { useEffect } from "react";
+
+import PurchaseInvoiceDrawer from "./PurchaseInvoiceDrawer";
+import PurchaseInvoiceTable from "./PurchaseInvoiceTable";
+import { useBuyingActions, useBuyingData } from "@/features/buying/hooks";
+
+export default function PurchaseInvoicesPage() {
+  const { message } = App.useApp();
+  const {
+    purchaseReceipts,
+    filteredPurchaseInvoices,
+    loading,
+    saving,
+    submitting,
+    drawerOpen,
+    mode,
+    selectedDocument,
+    error,
+    search,
+    masterLoading,
+    suppliersMaster,
+    companiesMaster,
+    taxTemplatesMaster,
+    itemsMaster,
+  } = useBuyingData();
+  const actions = useBuyingActions();
+
+  useEffect(() => {
+    actions.setCurrentModule("purchase-invoice");
+    void actions.fetchBuyingMasterData().catch((caught) => {
+      void message.error(
+        caught instanceof Error ? caught.message : "Unable to load master data.",
+      );
+    });
+  }, []);
+
+  useEffect(() => {
+    void actions.fetchPurchaseInvoices().catch((caught) => {
+      void message.error(caught instanceof Error ? caught.message : "Unable to load invoices.");
+    });
+    void actions.fetchPurchaseReceipts().catch((caught) => {
+      void message.error(caught instanceof Error ? caught.message : "Unable to load receipts.");
+    });
+  }, []);
+
+  async function refresh() {
+    await actions.fetchPurchaseInvoices().catch((caught) => {
+      void message.error(caught instanceof Error ? caught.message : "Unable to refresh.");
+    });
+  }
+
+  return (
+    <Flex vertical gap={24}>
+      <Card>
+        <Flex justify="space-between" align="flex-start" gap={16} wrap="wrap">
+          <div>
+            <Typography.Title level={2} style={{ marginTop: 0, marginBottom: 8 }}>
+              Purchase Invoices
+            </Typography.Title>
+            <Typography.Text type="secondary">
+              Capture supplier bills and accounting (stock already posted on receipt)
+            </Typography.Text>
+          </div>
+          <Space wrap>
+            <Input.Search
+              allowClear
+              placeholder="Search documents"
+              value={search}
+              onChange={(event) => actions.setSearch(event.target.value)}
+              style={{ width: 280 }}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => actions.openCreateDrawer()}>
+              New invoice
+            </Button>
+          </Space>
+        </Flex>
+      </Card>
+
+      <Card>
+        {filteredPurchaseInvoices.length === 0 && !loading ? (
+          <Empty description="No purchase invoices found" />
+        ) : (
+          <PurchaseInvoiceTable
+            rows={filteredPurchaseInvoices}
+            loading={loading}
+            onView={async (row) => {
+              const name = String(row.name ?? "");
+              if (!name) return;
+              try {
+                await actions.fetchBuyingDocument(name, "view");
+              } catch (caught) {
+                void message.error(caught instanceof Error ? caught.message : "Unable to open.");
+              }
+            }}
+            onEdit={async (row) => {
+              const name = String(row.name ?? "");
+              if (!name) return;
+              try {
+                await actions.fetchBuyingDocument(name, "edit");
+              } catch (caught) {
+                void message.error(caught instanceof Error ? caught.message : "Unable to open.");
+              }
+            }}
+          />
+        )}
+      </Card>
+
+      <PurchaseInvoiceDrawer
+        open={drawerOpen}
+        mode={mode}
+        saving={saving}
+        submitting={submitting}
+        error={error}
+        selectedDocument={selectedDocument}
+        masterLoading={masterLoading}
+        purchaseReceipts={purchaseReceipts}
+        suppliers={suppliersMaster}
+        companies={companiesMaster}
+        taxTemplates={taxTemplatesMaster}
+        items={itemsMaster}
+        onClose={() => actions.closeDrawer()}
+        onEdit={async () => {
+          const name =
+            typeof selectedDocument?.name === "string" ? selectedDocument.name : "";
+          if (!name) return;
+          try {
+            await actions.fetchBuyingDocument(name, "edit");
+          } catch (caught) {
+            void message.error(caught instanceof Error ? caught.message : "Unable to edit.");
+          }
+        }}
+        onCreate={async (values) => {
+          await actions.createPurchaseInvoice(values);
+          void message.success("Purchase Invoice saved.");
+          await refresh();
+        }}
+        onUpdate={async ({ name, values }) => {
+          await actions.updatePurchaseInvoice({ name, values });
+          void message.success("Purchase Invoice updated.");
+          await refresh();
+        }}
+        onSubmitDocument={async (name) => {
+          await actions.submitPurchaseInvoice(name);
+          void message.success("Purchase Invoice submitted.");
+          await refresh();
+          actions.closeDrawer();
+        }}
+      />
+    </Flex>
+  );
+}
