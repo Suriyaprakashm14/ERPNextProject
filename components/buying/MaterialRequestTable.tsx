@@ -65,7 +65,7 @@ export default function MaterialRequestTable({
 
   return (
     <Table<BuyingDocument>
-      rowKey={(row, index) => String(row.name ?? `row-${index}`)}
+      rowKey="name"
       loading={loading}
       columns={columns}
       dataSource={rows}
